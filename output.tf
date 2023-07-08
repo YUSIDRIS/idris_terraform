@@ -1,5 +1,5 @@
 output "vpc_id" {
-  value= aws_vpc.main_vpc.id
+  value= module.vpc.vpc_id
 }
 
 output "public_ip" {
