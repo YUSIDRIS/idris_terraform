@@ -1,11 +1,4 @@
-variable  "vpc_cidr" {
-  description= "this is for all vpcs"
-  type =  list(object({
-    cidr_block = string
-    name = string}))
-}
-
-resource "aws_vpc" "main_vpc" {
+/*resource "aws_vpc" "main_vpc" {
   cidr_block       = var.vpc_cidr[0].cidr_block
   enable_dns_hostnames = true
 
@@ -13,21 +6,39 @@ resource "aws_vpc" "main_vpc" {
     Name = var.vpc_cidr[0].name
   }
 }
+module "my_network" {
+  source = "./module/network"
+  vpc_tobi = aws_vpc.main_vpc.id
+  vpc_cidr = var.vpc_cidr
+  availa_zone = var.availa_zone
+  idris_prefix = var.idris_prefix
+}*/
 
-output "vpc_id" {
-  value= "aws_vpc.main_vpc.id"
-}
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
 
-resource "aws_subnet" "public_subnet_1" {
-  vpc_id     = aws_vpc.main_vpc.id
-  cidr_block = var.vpc_cidr[1].cidr_block
-  availability_zone = "us-east-2a"
-  map_public_ip_on_launch= true
+  name = var.vpc_cidr[0].name
+  cidr = var.vpc_cidr[0].cidr_block
+
+  azs             = [var.availa_zone]
+  public_subnets  = [var.vpc_cidr[1].cidr_block]
+  public_subnet_tags = { Name = var.vpc_cidr[1].name }
+  
 
   tags = {
-    Name = var.vpc_cidr[1].name  }
+    Name = var.vpc_cidr[0].name
+  }
 }
 
-output "subnet_id" {
-  value= "aws_subnet.public_subnet_1.id"
+module "my_webserver" {
+  source = "./module/weserver"
+  vpc_cidr = module.vpc.vpc_cidr_block
+  my_ip = var.my_ip
+  vpc_tobi = module.vpc.vpc_id
+  idris_prefix = var.idris_prefix
+  instance = var.instance
+  availa_zone = var.availa_zone
+  public_key_location = var.public_key_location
+  subnet_di = module.vpc.public_subnets[0]
+
 }
